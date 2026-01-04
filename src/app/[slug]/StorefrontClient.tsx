@@ -14,7 +14,8 @@ interface Product {
   price: number;
   mrp?: number;
   image_url: string;
-  category_id: string;
+  category_id?: string;
+  category?: string;
   in_stock: boolean;
   description?: string;
 }
@@ -256,9 +257,31 @@ export default function StorefrontClient({
 
   const filteredProducts = products.filter(product => {
     const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = !selectedCategory || product.category_id === selectedCategory;
+    // Filter by category - check if product's category matches the selected category ID
+    let matchesCategory = true;
+    if (selectedCategory) {
+      // Find the category object to get its name
+      const selectedCategoryObj = categories.find(cat => cat.id === selectedCategory);
+      if (selectedCategoryObj) {
+        // Match products by category name
+        matchesCategory = product.category === selectedCategoryObj.name || product.category_id === selectedCategory;
+      } else {
+        matchesCategory = false;
+      }
+    }
     return matchesSearch && matchesCategory;
   });
+
+  const handleCategorySelect = (categoryId: string | null) => {
+    setSelectedCategory(categoryId);
+    // Scroll to products section smoothly
+    setTimeout(() => {
+      const productsSection = document.getElementById('products');
+      if (productsSection) {
+        productsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, 0);
+  };
 
   const handleWhatsAppOrder = () => {
     if (!store?.phone) return;
@@ -292,7 +315,7 @@ export default function StorefrontClient({
   }
 
   const themeProps = {
-    store, products, categories, socialLinks, banners, theme, gridMode, storeSlug, cart, setCart: setCart as React.Dispatch<React.SetStateAction<CartItem[]>>, wishlist, setWishlist: setWishlist as React.Dispatch<React.SetStateAction<Product[]>>, orders, setOrders: setOrders as React.Dispatch<React.SetStateAction<Order[]>>, showCart, setShowCart, showWishlist, setShowWishlist, showOrders, setShowOrders, searchQuery, setSearchQuery, selectedCategory, setSelectedCategory, showCheckout, setShowCheckout, showUpiQr, setShowUpiQr, orderId, setOrderId, customerName, setCustomerName, customerPhone, setCustomerPhone, customerAddress, setCustomerAddress, showPaymentComplete, setShowPaymentComplete, addToCart, updateQuantity, removeFromCart, toggleWishlist, isInWishlist, cartTotal, cartCount, generateOrderId, generateUpiUrl, handleProceedToPayment, handlePaymentCompleted, filteredProducts, handleWhatsAppOrder
+    store, products, categories, socialLinks, banners, theme, gridMode, storeSlug, cart, setCart: setCart as React.Dispatch<React.SetStateAction<CartItem[]>>, wishlist, setWishlist: setWishlist as React.Dispatch<React.SetStateAction<Product[]>>, orders, setOrders: setOrders as React.Dispatch<React.SetStateAction<Order[]>>, showCart, setShowCart, showWishlist, setShowWishlist, showOrders, setShowOrders, searchQuery, setSearchQuery, selectedCategory, setSelectedCategory, handleCategorySelect, showCheckout, setShowCheckout, showUpiQr, setShowUpiQr, orderId, setOrderId, customerName, setCustomerName, customerPhone, setCustomerPhone, customerAddress, setCustomerAddress, showPaymentComplete, setShowPaymentComplete, addToCart, updateQuantity, removeFromCart, toggleWishlist, isInWishlist, cartTotal, cartCount, generateOrderId, generateUpiUrl, handleProceedToPayment, handlePaymentCompleted, filteredProducts, handleWhatsAppOrder
   };
 
   if (themeId === 'medical') return <MedicalTheme {...themeProps} />;
@@ -327,6 +350,7 @@ interface ThemeProps {
   setSearchQuery: React.Dispatch<React.SetStateAction<string>>;
   selectedCategory: string | null;
   setSelectedCategory: React.Dispatch<React.SetStateAction<string | null>>;
+  handleCategorySelect: (categoryId: string | null) => void;
   showCheckout: boolean;
   setShowCheckout: React.Dispatch<React.SetStateAction<boolean>>;
   showUpiQr: boolean;
@@ -356,7 +380,7 @@ interface ThemeProps {
   handleWhatsAppOrder: () => void;
 }
 
-function PetalsTheme({ store, products, categories, socialLinks, banners, theme, gridMode, storeSlug, cart, wishlist, orders, showCart, setShowCart, showWishlist, setShowWishlist, showOrders, setShowOrders, searchQuery, setSearchQuery, selectedCategory, setSelectedCategory, showCheckout, setShowCheckout, showUpiQr, setShowUpiQr, orderId, customerName, setCustomerName, customerPhone, setCustomerPhone, customerAddress, setCustomerAddress, showPaymentComplete, addToCart, updateQuantity, removeFromCart, toggleWishlist, isInWishlist, cartTotal, cartCount, handleProceedToPayment, handlePaymentCompleted, filteredProducts, handleWhatsAppOrder, generateUpiUrl }: ThemeProps) {
+function PetalsTheme({ store, products, categories, socialLinks, banners, theme, gridMode, storeSlug, cart, wishlist, orders, showCart, setShowCart, showWishlist, setShowWishlist, showOrders, setShowOrders, searchQuery, setSearchQuery, selectedCategory, setSelectedCategory, handleCategorySelect, showCheckout, setShowCheckout, showUpiQr, setShowUpiQr, orderId, customerName, setCustomerName, customerPhone, setCustomerPhone, customerAddress, setCustomerAddress, showPaymentComplete, addToCart, updateQuantity, removeFromCart, toggleWishlist, isInWishlist, cartTotal, cartCount, handleProceedToPayment, handlePaymentCompleted, filteredProducts, handleWhatsAppOrder, generateUpiUrl }: ThemeProps) {
   return (
     <div className="min-h-screen bg-gradient-to-b from-rose-50 via-pink-50 to-white">
       <style jsx global>{`
@@ -487,7 +511,7 @@ function PetalsTheme({ store, products, categories, socialLinks, banners, theme,
               {categories.slice(0, 4).map((cat) => (
                 <button
                   key={cat.id}
-                  onClick={() => setSelectedCategory(selectedCategory === cat.id ? null : cat.id)}
+                  onClick={() => handleCategorySelect(selectedCategory === cat.id ? null : cat.id)}
                   className={`petal-card group relative aspect-[4/5] rounded-2xl overflow-hidden ${selectedCategory === cat.id ? 'ring-2 ring-pink-400 ring-offset-2' : ''}`}
                 >
                   {cat.image_url ? (
@@ -511,11 +535,11 @@ function PetalsTheme({ store, products, categories, socialLinks, banners, theme,
 
           {categories.length > 4 && (
             <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide mb-8">
-              <button onClick={() => setSelectedCategory(null)} className={`flex-shrink-0 px-5 py-2.5 rounded-full text-sm font-medium transition-all ${!selectedCategory ? 'bg-gradient-to-r from-pink-500 to-rose-500 text-white shadow-lg shadow-pink-500/30' : 'bg-pink-50 text-pink-600 hover:bg-pink-100'}`}>
+              <button onClick={() => handleCategorySelect(null)} className={`flex-shrink-0 px-5 py-2.5 rounded-full text-sm font-medium transition-all ${!selectedCategory ? 'bg-gradient-to-r from-pink-500 to-rose-500 text-white shadow-lg shadow-pink-500/30' : 'bg-pink-50 text-pink-600 hover:bg-pink-100'}`}>
                 All Items
               </button>
               {categories.slice(4).map(cat => (
-                <button key={cat.id} onClick={() => setSelectedCategory(cat.id)} className={`flex-shrink-0 px-5 py-2.5 rounded-full text-sm font-medium transition-all ${selectedCategory === cat.id ? 'bg-gradient-to-r from-pink-500 to-rose-500 text-white shadow-lg shadow-pink-500/30' : 'bg-pink-50 text-pink-600 hover:bg-pink-100'}`}>
+                <button key={cat.id} onClick={() => handleCategorySelect(cat.id)} className={`flex-shrink-0 px-5 py-2.5 rounded-full text-sm font-medium transition-all ${selectedCategory === cat.id ? 'bg-gradient-to-r from-pink-500 to-rose-500 text-white shadow-lg shadow-pink-500/30' : 'bg-pink-50 text-pink-600 hover:bg-pink-100'}`}>
                   {cat.name}
                 </button>
               ))}
@@ -660,7 +684,7 @@ function PetalsTheme({ store, products, categories, socialLinks, banners, theme,
   );
 }
 
-function MedicalTheme({ store, products, categories, socialLinks, banners, theme, gridMode, storeSlug, cart, wishlist, orders, showCart, setShowCart, showWishlist, setShowWishlist, showOrders, setShowOrders, searchQuery, setSearchQuery, selectedCategory, setSelectedCategory, showCheckout, setShowCheckout, showUpiQr, setShowUpiQr, orderId, customerName, setCustomerName, customerPhone, setCustomerPhone, customerAddress, setCustomerAddress, showPaymentComplete, addToCart, updateQuantity, removeFromCart, toggleWishlist, isInWishlist, cartTotal, cartCount, handleProceedToPayment, handlePaymentCompleted, filteredProducts, handleWhatsAppOrder, generateUpiUrl }: ThemeProps) {
+function MedicalTheme({ store, products, categories, socialLinks, banners, theme, gridMode, storeSlug, cart, wishlist, orders, showCart, setShowCart, showWishlist, setShowWishlist, showOrders, setShowOrders, searchQuery, setSearchQuery, selectedCategory, setSelectedCategory, handleCategorySelect, showCheckout, setShowCheckout, showUpiQr, setShowUpiQr, orderId, customerName, setCustomerName, customerPhone, setCustomerPhone, customerAddress, setCustomerAddress, showPaymentComplete, addToCart, updateQuantity, removeFromCart, toggleWishlist, isInWishlist, cartTotal, cartCount, handleProceedToPayment, handlePaymentCompleted, filteredProducts, handleWhatsAppOrder, generateUpiUrl }: ThemeProps) {
   return (
     <div className="min-h-screen bg-gradient-to-b from-teal-50 to-white">
       <style jsx global>{`
@@ -755,11 +779,11 @@ function MedicalTheme({ store, products, categories, socialLinks, banners, theme
 
           <div className="bg-gradient-to-r from-teal-50 to-cyan-50 border-t border-teal-100">
             <div className="flex overflow-x-auto px-4 py-3 gap-2 scrollbar-hide">
-              <button onClick={() => setSelectedCategory(null)} className={`flex-shrink-0 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all ${!selectedCategory ? 'bg-gradient-to-r from-teal-600 to-cyan-600 text-white shadow-lg shadow-teal-500/30' : 'bg-white text-gray-700 hover:bg-teal-100 border border-teal-100'}`}>
+              <button onClick={() => handleCategorySelect(null)} className={`flex-shrink-0 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all ${!selectedCategory ? 'bg-gradient-to-r from-teal-600 to-cyan-600 text-white shadow-lg shadow-teal-500/30' : 'bg-white text-gray-700 hover:bg-teal-100 border border-teal-100'}`}>
                 All Products
               </button>
               {categories.map(cat => (
-                <button key={cat.id} onClick={() => setSelectedCategory(cat.id)} className={`flex-shrink-0 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all flex items-center gap-2 ${selectedCategory === cat.id ? 'bg-gradient-to-r from-teal-600 to-cyan-600 text-white shadow-lg shadow-teal-500/30' : 'bg-white text-gray-700 hover:bg-teal-100 border border-teal-100'}`}>
+                <button key={cat.id} onClick={() => handleCategorySelect(cat.id)} className={`flex-shrink-0 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all flex items-center gap-2 ${selectedCategory === cat.id ? 'bg-gradient-to-r from-teal-600 to-cyan-600 text-white shadow-lg shadow-teal-500/30' : 'bg-white text-gray-700 hover:bg-teal-100 border border-teal-100'}`}>
                   {store.show_category_images && cat.image_url && <img src={getOptimizedImageUrl(cat.image_url, { width: 24, height: 24 })} alt={cat.name} className="w-5 h-5 rounded-full object-cover" />}
                   {cat.name}
                 </button>
@@ -957,7 +981,7 @@ function MedicalTheme({ store, products, categories, socialLinks, banners, theme
   );
 }
 
-function FashionTheme({ store, products, categories, socialLinks, banners, theme, gridMode, storeSlug, cart, wishlist, orders, showCart, setShowCart, showWishlist, setShowWishlist, showOrders, setShowOrders, searchQuery, setSearchQuery, selectedCategory, setSelectedCategory, showCheckout, setShowCheckout, showUpiQr, setShowUpiQr, orderId, customerName, setCustomerName, customerPhone, setCustomerPhone, customerAddress, setCustomerAddress, showPaymentComplete, addToCart, updateQuantity, removeFromCart, toggleWishlist, isInWishlist, cartTotal, cartCount, handleProceedToPayment, handlePaymentCompleted, filteredProducts, handleWhatsAppOrder, generateUpiUrl }: ThemeProps) {
+function FashionTheme({ store, products, categories, socialLinks, banners, theme, gridMode, storeSlug, cart, wishlist, orders, showCart, setShowCart, showWishlist, setShowWishlist, showOrders, setShowOrders, searchQuery, setSearchQuery, selectedCategory, setSelectedCategory, handleCategorySelect, showCheckout, setShowCheckout, showUpiQr, setShowUpiQr, orderId, customerName, setCustomerName, customerPhone, setCustomerPhone, customerAddress, setCustomerAddress, showPaymentComplete, addToCart, updateQuantity, removeFromCart, toggleWishlist, isInWishlist, cartTotal, cartCount, handleProceedToPayment, handlePaymentCompleted, filteredProducts, handleWhatsAppOrder, generateUpiUrl }: ThemeProps) {
   return (
     <div className="min-h-screen bg-[#0a0a0f]">
       <style jsx global>{`
@@ -1008,11 +1032,11 @@ function FashionTheme({ store, products, categories, socialLinks, banners, theme
             </Link>
 
             <nav className="hidden lg:flex items-center gap-10">
-              <button onClick={() => setSelectedCategory(null)} className={`text-xs tracking-[0.2em] uppercase transition-all duration-300 ${!selectedCategory ? 'text-white' : 'text-white/40 hover:text-white'}`}>
+              <button onClick={() => handleCategorySelect(null)} className={`text-xs tracking-[0.2em] uppercase transition-all duration-300 ${!selectedCategory ? 'text-white' : 'text-white/40 hover:text-white'}`}>
                 All
               </button>
               {categories.slice(0, 5).map(cat => (
-                <button key={cat.id} onClick={() => setSelectedCategory(cat.id)} className={`text-xs tracking-[0.2em] uppercase transition-all duration-300 ${selectedCategory === cat.id ? 'text-white' : 'text-white/40 hover:text-white'}`}>
+                <button key={cat.id} onClick={() => handleCategorySelect(cat.id)} className={`text-xs tracking-[0.2em] uppercase transition-all duration-300 ${selectedCategory === cat.id ? 'text-white' : 'text-white/40 hover:text-white'}`}>
                   {cat.name}
                 </button>
               ))}
@@ -1073,7 +1097,7 @@ function FashionTheme({ store, products, categories, socialLinks, banners, theme
             <h2 className="font-display text-3xl lg:text-4xl text-white text-center mb-12">Categories</h2>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
               {categories.slice(0, 4).map(cat => (
-                <button key={cat.id} onClick={() => setSelectedCategory(cat.id)} className="luxury-card group relative aspect-[3/4] overflow-hidden rounded-xl">
+                <button key={cat.id} onClick={() => handleCategorySelect(cat.id)} className="luxury-card group relative aspect-[3/4] overflow-hidden rounded-xl">
                   {cat.image_url ? (
                     <img src={getOptimizedImageUrl(cat.image_url, { width: 400, height: 500 })} alt={cat.name} className="w-full h-full object-cover group-hover:scale-110 transition duration-700" />
                   ) : (
@@ -1216,7 +1240,7 @@ function FashionTheme({ store, products, categories, socialLinks, banners, theme
   );
 }
 
-function GeneralTheme({ store, products, categories, socialLinks, banners, theme, gridMode, storeSlug, cart, wishlist, orders, showCart, setShowCart, showWishlist, setShowWishlist, showOrders, setShowOrders, searchQuery, setSearchQuery, selectedCategory, setSelectedCategory, showCheckout, setShowCheckout, showUpiQr, setShowUpiQr, orderId, customerName, setCustomerName, customerPhone, setCustomerPhone, customerAddress, setCustomerAddress, showPaymentComplete, addToCart, updateQuantity, removeFromCart, toggleWishlist, isInWishlist, cartTotal, cartCount, handleProceedToPayment, handlePaymentCompleted, filteredProducts, handleWhatsAppOrder, generateUpiUrl }: ThemeProps) {
+function GeneralTheme({ store, products, categories, socialLinks, banners, theme, gridMode, storeSlug, cart, wishlist, orders, showCart, setShowCart, showWishlist, setShowWishlist, showOrders, setShowOrders, searchQuery, setSearchQuery, selectedCategory, setSelectedCategory, handleCategorySelect, showCheckout, setShowCheckout, showUpiQr, setShowUpiQr, orderId, customerName, setCustomerName, customerPhone, setCustomerPhone, customerAddress, setCustomerAddress, showPaymentComplete, addToCart, updateQuantity, removeFromCart, toggleWishlist, isInWishlist, cartTotal, cartCount, handleProceedToPayment, handlePaymentCompleted, filteredProducts, handleWhatsAppOrder, generateUpiUrl }: ThemeProps) {
   return (
     <div className="min-h-screen bg-slate-50">
       <style jsx global>{`
@@ -1338,11 +1362,11 @@ function GeneralTheme({ store, products, categories, socialLinks, banners, theme
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <h2 className="font-display text-xl font-bold text-gray-900 mb-6">Categories</h2>
             <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
-              <button onClick={() => setSelectedCategory(null)} className={`flex-shrink-0 px-5 py-3 rounded-xl font-semibold text-sm transition-all ${!selectedCategory ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/30' : 'bg-white text-gray-700 hover:bg-blue-50 border border-gray-200'}`}>
+              <button onClick={() => handleCategorySelect(null)} className={`flex-shrink-0 px-5 py-3 rounded-xl font-semibold text-sm transition-all ${!selectedCategory ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/30' : 'bg-white text-gray-700 hover:bg-blue-50 border border-gray-200'}`}>
                 All Products
               </button>
               {categories.map(cat => (
-                <button key={cat.id} onClick={() => setSelectedCategory(cat.id)} className={`flex-shrink-0 px-5 py-3 rounded-xl font-semibold text-sm transition-all flex items-center gap-2 ${selectedCategory === cat.id ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/30' : 'bg-white text-gray-700 hover:bg-blue-50 border border-gray-200'}`}>
+                <button key={cat.id} onClick={() => handleCategorySelect(cat.id)} className={`flex-shrink-0 px-5 py-3 rounded-xl font-semibold text-sm transition-all flex items-center gap-2 ${selectedCategory === cat.id ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/30' : 'bg-white text-gray-700 hover:bg-blue-50 border border-gray-200'}`}>
                   {store.show_category_images && cat.image_url && <img src={getOptimizedImageUrl(cat.image_url, { width: 32, height: 32 })} alt={cat.name} className="w-6 h-6 rounded-full object-cover" />}
                   {cat.name}
                 </button>
@@ -1474,7 +1498,7 @@ function GeneralTheme({ store, products, categories, socialLinks, banners, theme
   );
 }
 
-function MinimalTheme({ store, products, categories, socialLinks, banners, theme, gridMode, storeSlug, cart, wishlist, orders, showCart, setShowCart, showWishlist, setShowWishlist, showOrders, setShowOrders, searchQuery, setSearchQuery, selectedCategory, setSelectedCategory, showCheckout, setShowCheckout, showUpiQr, setShowUpiQr, orderId, customerName, setCustomerName, customerPhone, setCustomerPhone, customerAddress, setCustomerAddress, showPaymentComplete, addToCart, updateQuantity, removeFromCart, toggleWishlist, isInWishlist, cartTotal, cartCount, handleProceedToPayment, handlePaymentCompleted, filteredProducts, handleWhatsAppOrder, generateUpiUrl }: ThemeProps) {
+function MinimalTheme({ store, products, categories, socialLinks, banners, theme, gridMode, storeSlug, cart, wishlist, orders, showCart, setShowCart, showWishlist, setShowWishlist, showOrders, setShowOrders, searchQuery, setSearchQuery, selectedCategory, setSelectedCategory, handleCategorySelect, showCheckout, setShowCheckout, showUpiQr, setShowUpiQr, orderId, customerName, setCustomerName, customerPhone, setCustomerPhone, customerAddress, setCustomerAddress, showPaymentComplete, addToCart, updateQuantity, removeFromCart, toggleWishlist, isInWishlist, cartTotal, cartCount, handleProceedToPayment, handlePaymentCompleted, filteredProducts, handleWhatsAppOrder, generateUpiUrl }: ThemeProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   
   return (
@@ -1514,11 +1538,11 @@ function MinimalTheme({ store, products, categories, socialLinks, banners, theme
             </Link>
 
             <nav className="hidden lg:flex items-center gap-10">
-              <button onClick={() => setSelectedCategory(null)} className={`text-sm transition ${!selectedCategory ? 'font-medium' : 'text-black/50 hover:text-black'}`}>
+              <button onClick={() => handleCategorySelect(null)} className={`text-sm transition ${!selectedCategory ? 'font-medium' : 'text-black/50 hover:text-black'}`}>
                 All
               </button>
               {categories.slice(0, 5).map(cat => (
-                <button key={cat.id} onClick={() => setSelectedCategory(cat.id)} className={`text-sm transition ${selectedCategory === cat.id ? 'font-medium' : 'text-black/50 hover:text-black'}`}>
+                <button key={cat.id} onClick={() => handleCategorySelect(cat.id)} className={`text-sm transition ${selectedCategory === cat.id ? 'font-medium' : 'text-black/50 hover:text-black'}`}>
                   {cat.name}
                 </button>
               ))}
@@ -1590,11 +1614,11 @@ function MinimalTheme({ store, products, categories, socialLinks, banners, theme
       <section id="products" className="pb-20 lg:pb-28">
         <div className="max-w-6xl mx-auto px-4">
           <div className="hidden lg:flex items-center gap-3 mb-10">
-            <button onClick={() => setSelectedCategory(null)} className={`px-5 py-2.5 text-sm rounded-full transition ${!selectedCategory ? 'bg-black text-white' : 'hover:bg-black/5'}`}>
+            <button onClick={() => handleCategorySelect(null)} className={`px-5 py-2.5 text-sm rounded-full transition ${!selectedCategory ? 'bg-black text-white' : 'hover:bg-black/5'}`}>
               All
             </button>
             {categories.map(cat => (
-              <button key={cat.id} onClick={() => setSelectedCategory(cat.id)} className={`px-5 py-2.5 text-sm rounded-full transition ${selectedCategory === cat.id ? 'bg-black text-white' : 'hover:bg-black/5'}`}>
+              <button key={cat.id} onClick={() => handleCategorySelect(cat.id)} className={`px-5 py-2.5 text-sm rounded-full transition ${selectedCategory === cat.id ? 'bg-black text-white' : 'hover:bg-black/5'}`}>
                 {cat.name}
               </button>
             ))}

@@ -44,7 +44,7 @@ Disallow: /onboarding/
 Disallow: /_next/
 Disallow: /public/
 
-Sitemap: https://commerce.codetolittech.qzz.io/sitemap.xml
+Sitemap: https://ecommerce.codetolittech.qzz.io/sitemap.xml
 
 # Block certain bots
 User-agent: AhrefsBot

@@ -1,4 +1,4 @@
-export const API_BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://commerce.codetolittech.qzz.io/';
+export const API_BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://ecommerce.codetolittech.qzz.io/';
 
 export const API_ENDPOINTS = {
   AUTH: {

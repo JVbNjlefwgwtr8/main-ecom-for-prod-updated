@@ -83,7 +83,7 @@ export default function MyStorePage() {
             <input
               type="text"
               disabled
-              value={`https://commerce.codetolittech.qzz.io//${storeSlug}`}
+              value={`https://ecommerce.codetolittech.qzz.io/${storeSlug}`}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50"
             />
           </div>
