@@ -2,6 +2,8 @@ import { supabaseServer } from '@/lib/supabase';
 import { notFound } from 'next/navigation';
 import { Metadata } from 'next';
 import ProductPageClient from './ProductPageClient';
+import SeoJsonLd from '@/components/SeoJsonLd';
+import { getAbsoluteUrl } from '@/lib/site';
 
 interface Product {
   id: string;
@@ -67,12 +69,20 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     return { title: 'Product Not Found' };
   }
 
+  const title = `${data.product.name} | ${data.store.name}`;
+  const description = data.product.description || `Buy ${data.product.name} at ${data.store.name}`;
+
   return {
-    title: `${data.product.name} | ${data.store.name}`,
-    description: data.product.description || `Buy ${data.product.name} at ${data.store.name}`,
+    title,
+    description,
+    alternates: {
+      canonical: getAbsoluteUrl(`/${slug}/product/${productId}`),
+    },
     openGraph: {
-      title: data.product.name,
-      description: data.product.description || `Buy ${data.product.name}`,
+      title,
+      description,
+      url: getAbsoluteUrl(`/${slug}/product/${productId}`),
+      type: 'product',
       images: data.product.image_url ? [data.product.image_url] : [],
     },
   };
@@ -87,11 +97,34 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   }
 
   return (
-    <ProductPageClient
-      store={data.store}
-      product={data.product}
-      relatedProducts={data.relatedProducts}
-      slug={slug}
-    />
+    <>
+      <SeoJsonLd
+        id={`product-${productId}-schema`}
+        data={{
+          '@context': 'https://schema.org',
+          '@type': 'Product',
+          name: data.product.name,
+          description: data.product.description || `Buy ${data.product.name} at ${data.store.name}`,
+          image: data.product.image_url || undefined,
+          brand: {
+            '@type': 'Brand',
+            name: data.store.name,
+          },
+          url: getAbsoluteUrl(`/${slug}/product/${productId}`),
+          offers: {
+            '@type': 'Offer',
+            priceCurrency: 'INR',
+            price: data.product.price,
+            availability: data.product.in_stock ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+          },
+        }}
+      />
+      <ProductPageClient
+        store={data.store}
+        product={data.product}
+        relatedProducts={data.relatedProducts}
+        slug={slug}
+      />
+    </>
   );
 }

@@ -1,6 +1,8 @@
 import { createClient } from '@supabase/supabase-js';
 import { notFound } from 'next/navigation';
 import StorefrontClient from './StorefrontClient';
+import SeoJsonLd from '@/components/SeoJsonLd';
+import { getAbsoluteUrl } from '@/lib/site';
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -47,14 +49,28 @@ export default async function StorefrontPage({ params }: PageProps) {
   }
 
   return (
-    <StorefrontClient
-      store={data.store}
-      products={data.products}
-      categories={data.categories}
-      socialLinks={data.socialLinks}
-      banners={data.banners}
-      slug={slug}
-    />
+    <>
+      <SeoJsonLd
+        id={`store-${slug}-schema`}
+        data={{
+          '@context': 'https://schema.org',
+          '@type': 'Store',
+          name: data.store.name,
+          url: getAbsoluteUrl(`/${slug}`),
+          description: `Shop online at ${data.store.name} with products, contact details, and ordering options.`,
+          telephone: data.store.phone || undefined,
+          image: data.store.logo_url || undefined,
+        }}
+      />
+      <StorefrontClient
+        store={data.store}
+        products={data.products}
+        categories={data.categories}
+        socialLinks={data.socialLinks}
+        banners={data.banners}
+        slug={slug}
+      />
+    </>
   );
 }
 
@@ -66,9 +82,22 @@ export async function generateMetadata({ params }: PageProps) {
     return { title: 'Store Not Found' };
   }
 
+  const title = `${data.store.name} | Online Store`;
+  const description = `Shop online at ${data.store.name}. Browse products, contact details, and ordering options for this store.`;
+
   return {
-    title: data.store.name,
-    description: `Shop at ${data.store.name}`,
+    title,
+    description,
+    alternates: {
+      canonical: getAbsoluteUrl(`/${slug}`),
+    },
+    openGraph: {
+      title,
+      description,
+      url: getAbsoluteUrl(`/${slug}`),
+      type: 'website',
+      images: data.store.logo_url ? [data.store.logo_url] : [],
+    },
     icons: data.store.logo_url ? { icon: data.store.logo_url } : undefined,
   };
 }

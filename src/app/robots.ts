@@ -1,7 +1,8 @@
 import { MetadataRoute } from 'next';
+import { getSiteUrl } from '@/lib/site';
 
 export default function robots(): MetadataRoute.Robots {
-const baseUrl ='https://commerce.codetolittech.qzz.io';
+  const baseUrl = getSiteUrl();
   return {
     rules: [
       // MAIN RULESET FOR ALL NORMAL CRAWLERS

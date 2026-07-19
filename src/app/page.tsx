@@ -55,13 +55,13 @@ export default function HomePage() {
           </div>
           
           <h1 className="font-display text-5xl sm:text-6xl lg:text-7xl font-bold mb-6 leading-tight">
-            Build Your Online Store<br />
-            <span className="text-indigo-400">Without The Hassle</span>
+            Create an Online Store<br />
+            <span className="text-indigo-400">For Your Small Business</span>
           </h1>
           
           <p className="text-lg sm:text-xl text-white/60 max-w-2xl mx-auto mb-10">
-            Everything you need to sell online. Beautiful themes, powerful dashboard, 
-            UPI payments, WhatsApp orders - all in one platform.
+            Build a modern online store for your business with beautiful themes, product management,
+            UPI payments, WhatsApp ordering, and analytics in one simple platform.
           </p>
           
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">

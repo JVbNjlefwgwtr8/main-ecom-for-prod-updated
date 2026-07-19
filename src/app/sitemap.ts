@@ -1,7 +1,8 @@
 import { MetadataRoute } from 'next';
+import { getSiteUrl } from '@/lib/site';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://commerce.codetolittech.qzz.io';
+  const baseUrl = getSiteUrl();
 
   try {
     // Create Supabase client with anon key (should work with RLS)
