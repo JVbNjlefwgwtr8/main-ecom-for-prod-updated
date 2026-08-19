@@ -82,7 +82,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       title,
       description,
       url: getAbsoluteUrl(`/${slug}/product/${productId}`),
-      type: 'product',
+      type: 'website',
       images: data.product.image_url ? [data.product.image_url] : [],
     },
   };

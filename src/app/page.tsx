@@ -74,11 +74,9 @@ export default function HomePage() {
             </a>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 max-w-3xl mx-auto">
+          <div className="grid grid-cols-2 gap-6 max-w-xl mx-auto">
             {[
-              { icon: Users, label: '500+', sub: 'Active Stores' },
               { icon: Package, label: '50K+', sub: 'Products Listed' },
-              { icon: TrendingUp, label: '₹10Cr+', sub: 'GMV Processed' },
               { icon: Star, label: '4.9/5', sub: 'Store Rating' },
             ].map((stat, i) => (
               <div key={i} className="p-4 bg-white/5 rounded-2xl border border-white/5">
