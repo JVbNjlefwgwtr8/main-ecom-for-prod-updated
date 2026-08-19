@@ -14,11 +14,21 @@ async function getStoreData(slug: string) {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
 
-  const { data: store, error: storeError } = await supabase
+  let { data: store, error: storeError } = await supabase
     .from('stores')
     .select('id, slug, name, logo_url, hero_text, hero_image, phone, showcase_email, features, upi_id, upi_enabled, show_category_images, image_display_mode, theme, bg_color')
     .eq('slug', slug)
     .single();
+
+  if (storeError) {
+    const fallback = await supabase
+      .from('stores')
+      .select('id, slug, name, logo_url, hero_text, hero_image, phone, showcase_email')
+      .eq('slug', slug)
+      .single();
+    store = fallback.data as typeof store;
+    storeError = fallback.error;
+  }
 
   if (storeError || !store) {
     return null;
@@ -33,7 +43,7 @@ async function getStoreData(slug: string) {
 
   return {
     store,
-    products: productsRes.data || [],
+    products: productsRes.error ? [] : productsRes.data || [],
     categories: categoriesRes.data || [],
     socialLinks: socialRes.data || [],
     banners: bannersRes.data || [],
