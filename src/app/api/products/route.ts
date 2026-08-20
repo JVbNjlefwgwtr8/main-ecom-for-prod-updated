@@ -72,7 +72,7 @@ export async function POST(request: NextRequest) {
     }
 
     const authenticatedClient = createAuthenticatedClient(token);
-    const { name, description, price, mrp, category, image_url, in_stock, store_id } = await request.json();
+    const { name, description, price, mrp, category, image_url, in_stock, variant_options, store_id } = await request.json();
 
     const { data, error } = await authenticatedClient
       .from(TABLES.PRODUCTS)
@@ -85,6 +85,7 @@ export async function POST(request: NextRequest) {
           category,
           image_url,
           in_stock,
+          variant_options: variant_options || { colors: [], sizes: [], variants: [] },
           store_id,
         },
       ])
@@ -112,7 +113,7 @@ export async function PUT(request: NextRequest) {
     }
 
     const authenticatedClient = createAuthenticatedClient(token);
-    const { id, name, description, price, mrp, category, image_url, in_stock } = await request.json();
+    const { id, name, description, price, mrp, category, image_url, in_stock, variant_options } = await request.json();
 
     const { data, error } = await authenticatedClient
       .from(TABLES.PRODUCTS)
@@ -124,6 +125,7 @@ export async function PUT(request: NextRequest) {
         category,
         image_url,
         in_stock,
+        variant_options: variant_options || { colors: [], sizes: [], variants: [] },
       })
       .eq('id', id)
       .select();

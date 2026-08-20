@@ -17,6 +17,24 @@ interface Product {
   image_url: string;
   in_stock: boolean;
   store_id: string;
+  variant_options?: VariantOptions;
+}
+
+interface VariantOptions {
+  colors: string[];
+  sizes: string[];
+  variants: string[];
+}
+
+interface ProductFormData {
+  name: string;
+  description: string;
+  price: number;
+  mrp: number;
+  category: string;
+  image_url: string;
+  in_stock: boolean;
+  variant_options: VariantOptions;
 }
 
 interface Category {
@@ -38,7 +56,7 @@ export default function ProductsPage() {
   const [uploadingImage, setUploadingImage] = useState(false);
   const [uploadError, setUploadError] = useState('');
   const [dragOverProduct, setDragOverProduct] = useState(false);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<ProductFormData>({
     name: '',
     description: '',
     price: 0,
@@ -46,7 +64,18 @@ export default function ProductsPage() {
     category: '',
     image_url: '',
     in_stock: true,
+    variant_options: { colors: [], sizes: [], variants: [] },
   });
+
+  const updateVariantOptions = (key: keyof VariantOptions, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      variant_options: {
+        ...prev.variant_options,
+        [key]: value.split(',').map(item => item.trim()).filter(Boolean),
+      },
+    }));
+  };
 
   useEffect(() => {
     const fetchStoreId = async () => {
@@ -136,6 +165,7 @@ export default function ProductsPage() {
           category: '',
           image_url: '',
           in_stock: true,
+          variant_options: { colors: [], sizes: [], variants: [] },
         });
       }
     } catch (error) {
@@ -188,6 +218,7 @@ export default function ProductsPage() {
       category: product.category,
       image_url: product.image_url,
       in_stock: product.in_stock,
+      variant_options: product.variant_options || { colors: [], sizes: [], variants: [] },
     });
     setShowModal(true);
   };
@@ -281,6 +312,7 @@ export default function ProductsPage() {
               category: '',
               image_url: '',
               in_stock: true,
+              variant_options: { colors: [], sizes: [], variants: [] },
             });
             setShowModal(true);
           }}
@@ -527,6 +559,34 @@ export default function ProductsPage() {
                     <option key={cat.id} value={cat.name}>{cat.name}</option>
                   ))}
                 </select>
+              </div>
+
+              <div className="space-y-3 rounded-xl border border-slate-200 bg-slate-50 p-4">
+                <div>
+                  <p className="text-sm font-semibold text-slate-800">Product Options</p>
+                  <p className="text-xs text-slate-500 mt-0.5">Separate values with commas. Leave blank when not applicable.</p>
+                </div>
+                <input
+                  type="text"
+                  value={formData.variant_options.colors.join(', ')}
+                  onChange={(e) => updateVariantOptions('colors', e.target.value)}
+                  className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                  placeholder="Colors: Black, White, Blue"
+                />
+                <input
+                  type="text"
+                  value={formData.variant_options.sizes.join(', ')}
+                  onChange={(e) => updateVariantOptions('sizes', e.target.value)}
+                  className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                  placeholder="Sizes: S, M, L, XL"
+                />
+                <input
+                  type="text"
+                  value={formData.variant_options.variants.join(', ')}
+                  onChange={(e) => updateVariantOptions('variants', e.target.value)}
+                  className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                  placeholder="Variants: Standard, Premium"
+                />
               </div>
 
               <div>

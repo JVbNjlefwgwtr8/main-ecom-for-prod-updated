@@ -17,6 +17,11 @@ interface Product {
   image_url: string;
   in_stock: boolean;
   store_id: string;
+  variant_options?: {
+    colors?: string[];
+    sizes?: string[];
+    variants?: string[];
+  };
 }
 
 interface Store {
@@ -29,6 +34,9 @@ interface Store {
 
 interface CartItem extends Product {
   quantity: number;
+  selectedColor?: string;
+  selectedSize?: string;
+  selectedVariant?: string;
 }
 
 interface ProductPageClientProps {
@@ -43,6 +51,13 @@ export default function ProductPageClient({ store, product, relatedProducts, slu
   const [wishlist, setWishlist] = useState<string[]>([]);
   const [quantity, setQuantity] = useState(1);
   const [hydrated, setHydrated] = useState(false);
+  const [selectedColor, setSelectedColor] = useState('');
+  const [selectedSize, setSelectedSize] = useState('');
+  const [selectedVariant, setSelectedVariant] = useState('');
+
+  const colors = product.variant_options?.colors || [];
+  const sizes = product.variant_options?.sizes || [];
+  const variants = product.variant_options?.variants || [];
 
   useEffect(() => {
     const savedCart = localStorage.getItem(`cart_${slug}`);
@@ -65,14 +80,19 @@ export default function ProductPageClient({ store, product, relatedProducts, slu
   }, [wishlist, slug, hydrated]);
 
   const addToCart = () => {
+    const selectionKey = `${product.id}:${selectedColor}:${selectedSize}:${selectedVariant}`;
     setCart(prev => {
-      const existing = prev.find(item => item.id === product.id);
+      const existing = prev.find(item =>
+        `${item.id}:${item.selectedColor || ''}:${item.selectedSize || ''}:${item.selectedVariant || ''}` === selectionKey
+      );
       if (existing) {
         return prev.map(item =>
-          item.id === product.id ? { ...item, quantity: item.quantity + quantity } : item
+          `${item.id}:${item.selectedColor || ''}:${item.selectedSize || ''}:${item.selectedVariant || ''}` === selectionKey
+            ? { ...item, quantity: item.quantity + quantity }
+            : item
         );
       }
-      return [...prev, { ...product, quantity }];
+      return [...prev, { ...product, quantity, selectedColor, selectedSize, selectedVariant }];
     });
   };
 
@@ -215,6 +235,47 @@ export default function ProductPageClient({ store, product, relatedProducts, slu
               <div className="mb-8">
                 <h2 className="font-semibold text-stone-900 mb-3 text-lg">Description</h2>
                 <p className="text-stone-600 leading-relaxed">{product.description}</p>
+              </div>
+            )}
+
+            {(colors.length > 0 || sizes.length > 0 || variants.length > 0) && (
+              <div className="space-y-5 mb-8">
+                {colors.length > 0 && (
+                  <div>
+                    <p className="font-semibold text-stone-700 mb-2">Color</p>
+                    <div className="flex flex-wrap gap-2">
+                      {colors.map(color => (
+                        <button key={color} type="button" onClick={() => setSelectedColor(color)} className={`px-4 py-2 rounded-full border text-sm ${selectedColor === color ? 'border-stone-900 bg-stone-900 text-white' : 'border-stone-300 text-stone-700'}`}>
+                          {color}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {sizes.length > 0 && (
+                  <div>
+                    <p className="font-semibold text-stone-700 mb-2">Size</p>
+                    <div className="flex flex-wrap gap-2">
+                      {sizes.map(size => (
+                        <button key={size} type="button" onClick={() => setSelectedSize(size)} className={`min-w-12 px-4 py-2 rounded-full border text-sm ${selectedSize === size ? 'border-stone-900 bg-stone-900 text-white' : 'border-stone-300 text-stone-700'}`}>
+                          {size}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {variants.length > 0 && (
+                  <div>
+                    <p className="font-semibold text-stone-700 mb-2">Variant</p>
+                    <div className="flex flex-wrap gap-2">
+                      {variants.map(variant => (
+                        <button key={variant} type="button" onClick={() => setSelectedVariant(variant)} className={`px-4 py-2 rounded-full border text-sm ${selectedVariant === variant ? 'border-stone-900 bg-stone-900 text-white' : 'border-stone-300 text-stone-700'}`}>
+                          {variant}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 

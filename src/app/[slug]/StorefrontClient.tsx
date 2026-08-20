@@ -18,6 +18,11 @@ interface Product {
   category?: string;
   in_stock: boolean;
   description?: string;
+  variant_options?: {
+    colors?: string[];
+    sizes?: string[];
+    variants?: string[];
+  };
 }
 
 interface Category {
@@ -51,6 +56,21 @@ interface StoreData {
 
 interface CartItem extends Product {
   quantity: number;
+  selectedColor?: string;
+  selectedSize?: string;
+  selectedVariant?: string;
+}
+
+function getCartItemKey(item: CartItem): string {
+  return `${item.id}:${item.selectedColor || ''}:${item.selectedSize || ''}:${item.selectedVariant || ''}`;
+}
+
+function getCartItemOptions(item: CartItem): string {
+  return [
+    item.selectedColor && `Color: ${item.selectedColor}`,
+    item.selectedSize && `Size: ${item.selectedSize}`,
+    item.selectedVariant && `Variant: ${item.selectedVariant}`,
+  ].filter(Boolean).join(', ');
 }
 
 interface SocialLink {
@@ -196,7 +216,7 @@ export default function StorefrontClient({
 
   const updateQuantity = (productId: string, delta: number) => {
     setCart(prev => prev.map(item => {
-      if (item.id === productId) {
+      if (item.id === productId || getCartItemKey(item) === productId) {
         const newQty = item.quantity + delta;
         return newQty > 0 ? { ...item, quantity: newQty } : item;
       }
@@ -204,7 +224,7 @@ export default function StorefrontClient({
     }).filter(item => item.quantity > 0));
   };
 
-  const removeFromCart = (productId: string) => setCart(prev => prev.filter(item => item.id !== productId));
+  const removeFromCart = (productId: string) => setCart(prev => prev.filter(item => item.id !== productId && getCartItemKey(item) !== productId));
 
   const toggleWishlist = (product: Product) => {
     setWishlist(prev => {
@@ -221,7 +241,7 @@ export default function StorefrontClient({
   const generateOrderId = () => `ORD${Date.now().toString(36).toUpperCase()}${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
 
   const generateUpiUrl = (orderIdVal: string) => {
-    const orderItems = cart.map(item => `${item.name} x${item.quantity} ₹${item.price * item.quantity}`).join(', ');
+    const orderItems = cart.map(item => `${item.name}${getCartItemOptions(item) ? ` (${getCartItemOptions(item)})` : ''} x${item.quantity} ₹${item.price * item.quantity}`).join(', ');
     const note = `Order: ${orderIdVal} | ${customerName} | Ph: ${customerPhone} | Items: ${orderItems} | Total: ₹${cartTotal}`;
     return `upi://pay?pa=${store.upi_id}&pn=${encodeURIComponent(store.name)}&am=${cartTotal}&cu=INR&tn=${encodeURIComponent(note.substring(0, 80))}`;
   };
@@ -237,7 +257,7 @@ export default function StorefrontClient({
   const handlePaymentCompleted = () => {
     if (!store?.phone) return;
     
-    const orderText = cart.map(item => `${item.name} x${item.quantity} - ₹${(item.price * item.quantity).toLocaleString('en-IN')}`).join('\n');
+    const orderText = cart.map(item => `${item.name}${getCartItemOptions(item) ? ` (${getCartItemOptions(item)})` : ''} x${item.quantity} - ₹${(item.price * item.quantity).toLocaleString('en-IN')}`).join('\n');
     const message = `🧾 *Order ID: ${orderId}*\n\n🛒 *Order Details*\n${orderText}\n\n*Total: ₹${cartTotal.toLocaleString('en-IN')}*\n\n*Customer:* ${customerName}\n*Phone:* ${customerPhone}\n*Address:* ${customerAddress}\n\n✅ Payment completed via UPI`;
     
     const newOrder: Order = { id: orderId, date: new Date().toISOString(), items: [...cart], total: cartTotal, status: 'paid', customerName, customerPhone };
@@ -1776,7 +1796,7 @@ function CartDrawer({ show, onClose, cart, cartTotal, updateQuantity, removeFrom
           ) : (
             <div className="space-y-4">
               {cart.map(item => (
-                <div key={item.id} className={`flex gap-4 p-3 rounded-xl ${dark ? 'bg-white/5' : 'bg-gray-50'}`}>
+                <div key={getCartItemKey(item)} className={`flex gap-4 p-3 rounded-xl ${dark ? 'bg-white/5' : 'bg-gray-50'}`}>
                   {item.image_url ? (
                     <img src={getOptimizedImageUrl(item.image_url, { width: 100, height: 100 })} alt={item.name} className="w-20 h-20 object-cover rounded-lg flex-shrink-0" />
                   ) : (
@@ -1786,14 +1806,15 @@ function CartDrawer({ show, onClose, cart, cartTotal, updateQuantity, removeFrom
                   )}
                   <div className="flex-1 min-w-0">
                     <h3 className="font-medium text-sm mb-1 truncate">{item.name}</h3>
+                    {getCartItemOptions(item) && <p className="text-xs text-gray-500 mb-1">{getCartItemOptions(item)}</p>}
                     <p className="font-bold" style={{ color: theme.primary }}>₹{item.price.toLocaleString('en-IN')}</p>
                     <div className="flex items-center gap-2 mt-2">
                       <div className={`flex items-center rounded-lg ${dark ? 'bg-white/10' : 'bg-gray-100'}`}>
-                        <button onClick={() => updateQuantity(item.id, -1)} className="p-1.5" style={{ color: theme.primary }}><Minus className="w-4 h-4" /></button>
+                        <button onClick={() => updateQuantity(getCartItemKey(item), -1)} className="p-1.5" style={{ color: theme.primary }}><Minus className="w-4 h-4" /></button>
                         <span className="w-8 text-center font-bold text-sm">{item.quantity}</span>
-                        <button onClick={() => updateQuantity(item.id, 1)} className="p-1.5" style={{ color: theme.primary }}><Plus className="w-4 h-4" /></button>
+                        <button onClick={() => updateQuantity(getCartItemKey(item), 1)} className="p-1.5" style={{ color: theme.primary }}><Plus className="w-4 h-4" /></button>
                       </div>
-                      <button onClick={() => removeFromCart(item.id)} className="p-2 rounded-lg bg-red-50 text-red-500 hover:bg-red-100"><X className="w-4 h-4" /></button>
+                      <button onClick={() => removeFromCart(getCartItemKey(item))} className="p-2 rounded-lg bg-red-50 text-red-500 hover:bg-red-100"><X className="w-4 h-4" /></button>
                     </div>
                   </div>
                 </div>
