@@ -20,13 +20,9 @@ interface Product {
   variant_options?: VariantOptions;
 }
 
-interface VariantOptions {
-  colors: string[];
-  sizes: string[];
-  variants: string[];
-}
+type VariantOptions = Record<string, string[]>;
 
-const variantPresets: Record<keyof VariantOptions, string[]> = {
+const variantPresets: VariantOptions = {
   colors: ['Black', 'White', 'Red', 'Blue', 'Green', 'Yellow', 'Pink', 'Grey', 'Brown'],
   sizes: ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'Free Size'],
   variants: ['Standard', 'Basic', 'Premium', 'Pro', 'Plus', 'Max', 'Model A', 'Model B'],
@@ -62,11 +58,12 @@ export default function ProductsPage() {
   const [uploadingImage, setUploadingImage] = useState(false);
   const [uploadError, setUploadError] = useState('');
   const [dragOverProduct, setDragOverProduct] = useState(false);
-  const [customVariantInputs, setCustomVariantInputs] = useState<Record<keyof VariantOptions, string>>({
+  const [customVariantInputs, setCustomVariantInputs] = useState<Record<string, string>>({
     colors: '',
     sizes: '',
     variants: '',
   });
+  const [newOptionName, setNewOptionName] = useState('');
   const [formData, setFormData] = useState<ProductFormData>({
     name: '',
     description: '',
@@ -78,7 +75,7 @@ export default function ProductsPage() {
     variant_options: { colors: [], sizes: [], variants: [] },
   });
 
-  const addCustomVariantOptions = (key: keyof VariantOptions) => {
+  const addCustomVariantOptions = (key: string) => {
     const values = customVariantInputs[key]
       .split(',')
       .map(item => item.trim())
@@ -97,7 +94,7 @@ export default function ProductsPage() {
     setCustomVariantInputs(prev => ({ ...prev, [key]: '' }));
   };
 
-  const removeVariantOption = (key: keyof VariantOptions, value: string) => {
+  const removeVariantOption = (key: string, value: string) => {
     setFormData(prev => ({
       ...prev,
       variant_options: {
@@ -107,7 +104,7 @@ export default function ProductsPage() {
     }));
   };
 
-  const toggleVariantPreset = (key: keyof VariantOptions, value: string) => {
+  const toggleVariantPreset = (key: string, value: string) => {
     setFormData(prev => {
       const currentValues = prev.variant_options[key];
       const nextValues = currentValues.includes(value)
@@ -122,6 +119,41 @@ export default function ProductsPage() {
         },
       };
     });
+  };
+
+  const addOptionGroup = () => {
+    const optionName = newOptionName.trim();
+    if (!optionName) return;
+
+    setFormData(prev => ({
+      ...prev,
+      variant_options: {
+        ...prev.variant_options,
+        [optionName]: prev.variant_options[optionName] || [],
+      },
+    }));
+    setCustomVariantInputs(prev => ({ ...prev, [optionName]: '' }));
+    setNewOptionName('');
+  };
+
+  const removeOptionGroup = (key: string) => {
+    if (variantPresets[key]) return;
+
+    setFormData(prev => {
+      const nextOptions = { ...prev.variant_options };
+      delete nextOptions[key];
+      return { ...prev, variant_options: nextOptions };
+    });
+    setCustomVariantInputs(prev => {
+      const nextInputs = { ...prev };
+      delete nextInputs[key];
+      return nextInputs;
+    });
+  };
+
+  const resetVariantEditor = () => {
+    setCustomVariantInputs({ colors: '', sizes: '', variants: '' });
+    setNewOptionName('');
   };
 
   useEffect(() => {
@@ -214,6 +246,7 @@ export default function ProductsPage() {
           in_stock: true,
           variant_options: { colors: [], sizes: [], variants: [] },
         });
+        resetVariantEditor();
       }
     } catch (error) {
       console.error('Error saving product:', error);
@@ -267,6 +300,13 @@ export default function ProductsPage() {
       in_stock: product.in_stock,
       variant_options: product.variant_options || { colors: [], sizes: [], variants: [] },
     });
+    setCustomVariantInputs(
+      Object.keys(product.variant_options || {}).reduce<Record<string, string>>(
+        (inputs, key) => ({ ...inputs, [key]: '' }),
+        { colors: '', sizes: '', variants: '' }
+      )
+    );
+    setNewOptionName('');
     setShowModal(true);
   };
 
@@ -361,6 +401,7 @@ export default function ProductsPage() {
               in_stock: true,
               variant_options: { colors: [], sizes: [], variants: [] },
             });
+            resetVariantEditor();
             setShowModal(true);
           }}
           className="flex items-center justify-center gap-2 bg-indigo-600 text-white px-4 py-2.5 rounded-xl font-medium hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-600/20 text-sm"
@@ -613,13 +654,46 @@ export default function ProductsPage() {
                   <p className="text-sm font-semibold text-slate-800">Product Options</p>
                   <p className="text-xs text-slate-500 mt-0.5">Choose presets or add your own options. Selected values appear as chips.</p>
                 </div>
-                {(Object.keys(variantPresets) as Array<keyof VariantOptions>).map(key => (
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={newOptionName}
+                    onChange={(e) => setNewOptionName(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        addOptionGroup();
+                      }
+                    }}
+                    className="min-w-0 flex-1 border border-slate-200 rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                    placeholder="New option name, e.g. Material or Finish"
+                  />
+                  <button
+                    type="button"
+                    onClick={addOptionGroup}
+                    className="inline-flex items-center gap-1 rounded-xl bg-indigo-600 px-3 py-2 text-xs font-semibold text-white hover:bg-indigo-700"
+                  >
+                    <Plus className="h-3.5 w-3.5" /> Add option
+                  </button>
+                </div>
+                {Object.keys(formData.variant_options).map(key => (
                   <div key={key}>
-                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-2">
-                      {key === 'variants' ? 'Variants / Models' : key}
-                    </p>
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                        {key === 'variants' ? 'Variants / Models' : key}
+                      </p>
+                      {!variantPresets[key] && (
+                        <button
+                          type="button"
+                          onClick={() => removeOptionGroup(key)}
+                          className="text-xs font-medium text-red-500 hover:text-red-700"
+                        >
+                          Remove option
+                        </button>
+                      )}
+                    </div>
                     <div className="flex flex-wrap gap-2">
-                      {variantPresets[key].map(value => (
+                      {(variantPresets[key] || []).map(value => (
                         <button
                           key={value}
                           type="button"

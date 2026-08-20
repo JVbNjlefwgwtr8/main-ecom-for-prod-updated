@@ -17,11 +17,7 @@ interface Product {
   image_url: string;
   in_stock: boolean;
   store_id: string;
-  variant_options?: {
-    colors?: string[];
-    sizes?: string[];
-    variants?: string[];
-  };
+  variant_options?: Record<string, string[]>;
 }
 
 interface Store {
@@ -34,9 +30,7 @@ interface Store {
 
 interface CartItem extends Product {
   quantity: number;
-  selectedColor?: string;
-  selectedSize?: string;
-  selectedVariant?: string;
+  selectedOptions?: Record<string, string>;
 }
 
 interface ProductPageClientProps {
@@ -51,13 +45,8 @@ export default function ProductPageClient({ store, product, relatedProducts, slu
   const [wishlist, setWishlist] = useState<string[]>([]);
   const [quantity, setQuantity] = useState(1);
   const [hydrated, setHydrated] = useState(false);
-  const [selectedColor, setSelectedColor] = useState('');
-  const [selectedSize, setSelectedSize] = useState('');
-  const [selectedVariant, setSelectedVariant] = useState('');
-
-  const colors = product.variant_options?.colors || [];
-  const sizes = product.variant_options?.sizes || [];
-  const variants = product.variant_options?.variants || [];
+  const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
+  const optionGroups = Object.entries(product.variant_options || {}).filter(([, values]) => values.length > 0);
 
   useEffect(() => {
     const savedCart = localStorage.getItem(`cart_${slug}`);
@@ -80,19 +69,19 @@ export default function ProductPageClient({ store, product, relatedProducts, slu
   }, [wishlist, slug, hydrated]);
 
   const addToCart = () => {
-    const selectionKey = `${product.id}:${selectedColor}:${selectedSize}:${selectedVariant}`;
+    const selectionKey = `${product.id}:${JSON.stringify(selectedOptions)}`;
     setCart(prev => {
       const existing = prev.find(item =>
-        `${item.id}:${item.selectedColor || ''}:${item.selectedSize || ''}:${item.selectedVariant || ''}` === selectionKey
+        `${item.id}:${JSON.stringify(item.selectedOptions || {})}` === selectionKey
       );
       if (existing) {
         return prev.map(item =>
-          `${item.id}:${item.selectedColor || ''}:${item.selectedSize || ''}:${item.selectedVariant || ''}` === selectionKey
+          `${item.id}:${JSON.stringify(item.selectedOptions || {})}` === selectionKey
             ? { ...item, quantity: item.quantity + quantity }
             : item
         );
       }
-      return [...prev, { ...product, quantity, selectedColor, selectedSize, selectedVariant }];
+      return [...prev, { ...product, quantity, selectedOptions }];
     });
   };
 
@@ -238,44 +227,20 @@ export default function ProductPageClient({ store, product, relatedProducts, slu
               </div>
             )}
 
-            {(colors.length > 0 || sizes.length > 0 || variants.length > 0) && (
+            {optionGroups.length > 0 && (
               <div className="space-y-5 mb-8">
-                {colors.length > 0 && (
-                  <div>
-                    <p className="font-semibold text-stone-700 mb-2">Color</p>
+                {optionGroups.map(([groupName, values]) => (
+                  <div key={groupName}>
+                    <p className="font-semibold text-stone-700 mb-2">{groupName}</p>
                     <div className="flex flex-wrap gap-2">
-                      {colors.map(color => (
-                        <button key={color} type="button" onClick={() => setSelectedColor(color)} className={`px-4 py-2 rounded-full border text-sm ${selectedColor === color ? 'border-stone-900 bg-stone-900 text-white' : 'border-stone-300 text-stone-700'}`}>
-                          {color}
+                      {values.map(value => (
+                        <button key={value} type="button" onClick={() => setSelectedOptions(prev => ({ ...prev, [groupName]: value }))} className={`px-4 py-2 rounded-full border text-sm ${selectedOptions[groupName] === value ? 'border-stone-900 bg-stone-900 text-white' : 'border-stone-300 text-stone-700'}`}>
+                          {value}
                         </button>
                       ))}
                     </div>
                   </div>
-                )}
-                {sizes.length > 0 && (
-                  <div>
-                    <p className="font-semibold text-stone-700 mb-2">Size</p>
-                    <div className="flex flex-wrap gap-2">
-                      {sizes.map(size => (
-                        <button key={size} type="button" onClick={() => setSelectedSize(size)} className={`min-w-12 px-4 py-2 rounded-full border text-sm ${selectedSize === size ? 'border-stone-900 bg-stone-900 text-white' : 'border-stone-300 text-stone-700'}`}>
-                          {size}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                {variants.length > 0 && (
-                  <div>
-                    <p className="font-semibold text-stone-700 mb-2">Variant</p>
-                    <div className="flex flex-wrap gap-2">
-                      {variants.map(variant => (
-                        <button key={variant} type="button" onClick={() => setSelectedVariant(variant)} className={`px-4 py-2 rounded-full border text-sm ${selectedVariant === variant ? 'border-stone-900 bg-stone-900 text-white' : 'border-stone-300 text-stone-700'}`}>
-                          {variant}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
+                ))}
               </div>
             )}
 

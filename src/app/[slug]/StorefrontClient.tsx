@@ -19,9 +19,7 @@ interface Product {
   in_stock: boolean;
   description?: string;
   variant_options?: {
-    colors?: string[];
-    sizes?: string[];
-    variants?: string[];
+    [key: string]: string[] | undefined;
   };
 }
 
@@ -56,21 +54,28 @@ interface StoreData {
 
 interface CartItem extends Product {
   quantity: number;
+  selectedOptions?: Record<string, string>;
   selectedColor?: string;
   selectedSize?: string;
   selectedVariant?: string;
 }
 
 function getCartItemKey(item: CartItem): string {
-  return `${item.id}:${item.selectedColor || ''}:${item.selectedSize || ''}:${item.selectedVariant || ''}`;
+  const options = item.selectedOptions || {
+    ...(item.selectedColor ? { Color: item.selectedColor } : {}),
+    ...(item.selectedSize ? { Size: item.selectedSize } : {}),
+    ...(item.selectedVariant ? { Variant: item.selectedVariant } : {}),
+  };
+  return `${item.id}:${JSON.stringify(options)}`;
 }
 
 function getCartItemOptions(item: CartItem): string {
-  return [
-    item.selectedColor && `Color: ${item.selectedColor}`,
-    item.selectedSize && `Size: ${item.selectedSize}`,
-    item.selectedVariant && `Variant: ${item.selectedVariant}`,
-  ].filter(Boolean).join(', ');
+  const options = item.selectedOptions || {
+    ...(item.selectedColor ? { Color: item.selectedColor } : {}),
+    ...(item.selectedSize ? { Size: item.selectedSize } : {}),
+    ...(item.selectedVariant ? { Variant: item.selectedVariant } : {}),
+  };
+  return Object.entries(options).map(([name, value]) => `${name}: ${value}`).join(', ');
 }
 
 interface SocialLink {
