@@ -131,7 +131,7 @@ To create a new store admin:
 ## Support
 
 For issues or questions:
-- Email: support@codetolittech.qzz.io
+- Email: contact@codetoli.in
 - LinkedIn: https://linkedin.com/company/codetoli-technology
 
 ---

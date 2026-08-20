@@ -26,6 +26,12 @@ interface VariantOptions {
   variants: string[];
 }
 
+const variantPresets: Record<keyof VariantOptions, string[]> = {
+  colors: ['Black', 'White', 'Red', 'Blue', 'Green', 'Yellow', 'Pink', 'Grey', 'Brown'],
+  sizes: ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'Free Size'],
+  variants: ['Standard', 'Basic', 'Premium', 'Pro', 'Plus', 'Max', 'Model A', 'Model B'],
+};
+
 interface ProductFormData {
   name: string;
   description: string;
@@ -75,6 +81,23 @@ export default function ProductsPage() {
         [key]: value.split(',').map(item => item.trim()).filter(Boolean),
       },
     }));
+  };
+
+  const toggleVariantPreset = (key: keyof VariantOptions, value: string) => {
+    setFormData(prev => {
+      const currentValues = prev.variant_options[key];
+      const nextValues = currentValues.includes(value)
+        ? currentValues.filter(item => item !== value)
+        : [...currentValues, value];
+
+      return {
+        ...prev,
+        variant_options: {
+          ...prev.variant_options,
+          [key]: nextValues,
+        },
+      };
+    });
   };
 
   useEffect(() => {
@@ -564,28 +587,51 @@ export default function ProductsPage() {
               <div className="space-y-3 rounded-xl border border-slate-200 bg-slate-50 p-4">
                 <div>
                   <p className="text-sm font-semibold text-slate-800">Product Options</p>
-                  <p className="text-xs text-slate-500 mt-0.5">Separate values with commas. Leave blank when not applicable.</p>
+                  <p className="text-xs text-slate-500 mt-0.5">Choose common options or add custom values such as a model number.</p>
                 </div>
+                {(Object.keys(variantPresets) as Array<keyof VariantOptions>).map(key => (
+                  <div key={key}>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-2">
+                      {key === 'variants' ? 'Variants / Models' : key}
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {variantPresets[key].map(value => (
+                        <button
+                          key={value}
+                          type="button"
+                          onClick={() => toggleVariantPreset(key, value)}
+                          className={`px-3 py-1.5 rounded-full border text-xs font-medium transition-colors ${
+                            formData.variant_options[key].includes(value)
+                              ? 'border-indigo-600 bg-indigo-600 text-white'
+                              : 'border-slate-200 bg-white text-slate-600 hover:border-indigo-300'
+                          }`}
+                        >
+                          {value}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ))}
                 <input
                   type="text"
                   value={formData.variant_options.colors.join(', ')}
                   onChange={(e) => updateVariantOptions('colors', e.target.value)}
                   className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
-                  placeholder="Colors: Black, White, Blue"
+                  placeholder="Add custom colors, comma separated"
                 />
                 <input
                   type="text"
                   value={formData.variant_options.sizes.join(', ')}
                   onChange={(e) => updateVariantOptions('sizes', e.target.value)}
                   className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
-                  placeholder="Sizes: S, M, L, XL"
+                  placeholder="Add custom sizes, comma separated"
                 />
                 <input
                   type="text"
                   value={formData.variant_options.variants.join(', ')}
                   onChange={(e) => updateVariantOptions('variants', e.target.value)}
                   className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
-                  placeholder="Variants: Standard, Premium"
+                  placeholder="Add custom variants or models, comma separated"
                 />
               </div>
 

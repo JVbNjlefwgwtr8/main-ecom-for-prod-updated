@@ -445,11 +445,11 @@ export default function HomePage() {
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <a 
-                href="mailto:support@codetolittech.qzz.io"
+                href="mailto:contact@codetoli.in"
                 className="w-full sm:w-auto flex items-center justify-center gap-3 bg-indigo-600 text-white px-8 py-4 rounded-xl hover:bg-indigo-700 transition font-semibold"
               >
                 <Mail className="w-5 h-5" />
-                <span>support@codetolittech.qzz.io</span>
+                <span>contact@codetoli.in</span>
               </a>
               
               <a 

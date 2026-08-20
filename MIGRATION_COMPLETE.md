@@ -16,7 +16,7 @@ Successfully migrated the e-commerce platform from a dual Vite+React and Next.js
 - **Before:** Complex landing page with multiple feature sections
 - **After:** Minimal landing page with only "Codetoli Commerce" branding
 - **Added:** Contact information for account requests:
-  - Email: `support@codetolittech.qzz.io`
+  - Email: `contact@codetoli.in`
   - LinkedIn: `https://linkedin.com/company/codetoli-technology`
 
 ### 3. **Signup Removal** ✓

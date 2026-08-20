@@ -39,11 +39,11 @@ export default function HomePage() {
             <div className="flex flex-col md:flex-row items-center justify-center gap-8">
               {/* Email */}
               <a 
-                href="mailto:support@codetolittech.qzz.io"
+                href="mailto:contact@codetoli.in"
                 className="flex items-center gap-3 bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 transition"
               >
                 <Mail className="w-5 h-5" />
-                <span>support@codetolittech.qzz.io</span>
+                <span>contact@codetoli.in</span>
               </a>
               
               {/* LinkedIn */}

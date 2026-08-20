@@ -161,8 +161,8 @@ export default function LoginPage() {
 
             <div className="mt-6 text-center text-sm text-gray-600">
               If you don't have an account, please contact support at{' '}
-              <a href="mailto:support@codetolittech.qzz.io" className="text-blue-600 hover:underline font-medium">
-                support@codetolittech.qzz.io
+              <a href="mailto:contact@codetoli.in" className="text-blue-600 hover:underline font-medium">
+                contact@codetoli.in
               </a>
             </div>
           </div>

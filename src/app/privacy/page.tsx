@@ -57,7 +57,7 @@ export default function PrivacyPolicyPage() {
           
           <h2 className="text-2xl font-bold mt-8 mb-4">Contact Us</h2>
           <p>
-            If you have any questions about this Privacy Policy, please contact us at privacy@Codetoli Commerce.com
+            If you have any questions about this Privacy Policy, please contact us at contact@codetoli.in
           </p>
         </div>
       </div>
