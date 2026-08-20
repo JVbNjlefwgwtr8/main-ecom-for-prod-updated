@@ -62,6 +62,11 @@ export default function ProductsPage() {
   const [uploadingImage, setUploadingImage] = useState(false);
   const [uploadError, setUploadError] = useState('');
   const [dragOverProduct, setDragOverProduct] = useState(false);
+  const [customVariantInputs, setCustomVariantInputs] = useState<Record<keyof VariantOptions, string>>({
+    colors: '',
+    sizes: '',
+    variants: '',
+  });
   const [formData, setFormData] = useState<ProductFormData>({
     name: '',
     description: '',
@@ -73,12 +78,31 @@ export default function ProductsPage() {
     variant_options: { colors: [], sizes: [], variants: [] },
   });
 
-  const updateVariantOptions = (key: keyof VariantOptions, value: string) => {
+  const addCustomVariantOptions = (key: keyof VariantOptions) => {
+    const values = customVariantInputs[key]
+      .split(',')
+      .map(item => item.trim())
+      .filter(Boolean);
+
+    if (values.length === 0) return;
+
     setFormData(prev => ({
       ...prev,
       variant_options: {
         ...prev.variant_options,
-        [key]: value.split(',').map(item => item.trim()).filter(Boolean),
+        [key]: Array.from(new Set([...prev.variant_options[key], ...values])),
+      },
+    }));
+
+    setCustomVariantInputs(prev => ({ ...prev, [key]: '' }));
+  };
+
+  const removeVariantOption = (key: keyof VariantOptions, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      variant_options: {
+        ...prev.variant_options,
+        [key]: prev.variant_options[key].filter(item => item !== value),
       },
     }));
   };
@@ -587,7 +611,7 @@ export default function ProductsPage() {
               <div className="space-y-3 rounded-xl border border-slate-200 bg-slate-50 p-4">
                 <div>
                   <p className="text-sm font-semibold text-slate-800">Product Options</p>
-                  <p className="text-xs text-slate-500 mt-0.5">Choose common options or add custom values such as a model number.</p>
+                  <p className="text-xs text-slate-500 mt-0.5">Choose presets or add your own options. Selected values appear as chips.</p>
                 </div>
                 {(Object.keys(variantPresets) as Array<keyof VariantOptions>).map(key => (
                   <div key={key}>
@@ -610,29 +634,47 @@ export default function ProductsPage() {
                         </button>
                       ))}
                     </div>
+                    {formData.variant_options[key].length > 0 && (
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        {formData.variant_options[key].map(value => (
+                          <span key={value} className="inline-flex items-center gap-1 rounded-full bg-indigo-100 px-3 py-1.5 text-xs font-medium text-indigo-700">
+                            {value}
+                            <button
+                              type="button"
+                              onClick={() => removeVariantOption(key, value)}
+                              className="rounded-full p-0.5 hover:bg-indigo-200"
+                              aria-label={`Remove ${value}`}
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                    <div className="flex gap-2 mt-2">
+                      <input
+                        type="text"
+                        value={customVariantInputs[key]}
+                        onChange={(e) => setCustomVariantInputs(prev => ({ ...prev, [key]: e.target.value }))}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            addCustomVariantOptions(key);
+                          }
+                        }}
+                        className="min-w-0 flex-1 border border-slate-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                        placeholder={key === 'variants' ? 'e.g. Model X or Premium' : `Add custom ${key}`}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => addCustomVariantOptions(key)}
+                        className="inline-flex items-center gap-1 rounded-xl bg-slate-900 px-3 py-2 text-xs font-semibold text-white hover:bg-slate-700"
+                      >
+                        <Plus className="h-3.5 w-3.5" /> Add
+                      </button>
+                    </div>
                   </div>
                 ))}
-                <input
-                  type="text"
-                  value={formData.variant_options.colors.join(', ')}
-                  onChange={(e) => updateVariantOptions('colors', e.target.value)}
-                  className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
-                  placeholder="Add custom colors, comma separated"
-                />
-                <input
-                  type="text"
-                  value={formData.variant_options.sizes.join(', ')}
-                  onChange={(e) => updateVariantOptions('sizes', e.target.value)}
-                  className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
-                  placeholder="Add custom sizes, comma separated"
-                />
-                <input
-                  type="text"
-                  value={formData.variant_options.variants.join(', ')}
-                  onChange={(e) => updateVariantOptions('variants', e.target.value)}
-                  className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
-                  placeholder="Add custom variants or models, comma separated"
-                />
               </div>
 
               <div>
