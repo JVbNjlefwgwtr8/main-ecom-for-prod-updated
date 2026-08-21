@@ -101,6 +101,17 @@ interface Order {
   customerPhone: string;
 }
 
+interface PendingCheckout {
+  showCart: boolean;
+  showCheckout: boolean;
+  showUpiQr: boolean;
+  orderId: string;
+  customerName: string;
+  customerPhone: string;
+  customerAddress: string;
+  showPaymentComplete: boolean;
+}
+
 interface StorefrontClientProps {
   store: StoreData;
   products: Product[];
@@ -164,6 +175,7 @@ export default function StorefrontClient({
   const [customerPhone, setCustomerPhone] = useState('');
   const [customerAddress, setCustomerAddress] = useState('');
   const [showPaymentComplete, setShowPaymentComplete] = useState(false);
+  const [checkoutHydrated, setCheckoutHydrated] = useState(false);
 
   const themeId = store?.theme || 'default';
   const theme = useMemo(() => {
@@ -194,6 +206,71 @@ export default function StorefrontClient({
       try { setOrders(JSON.parse(savedOrders)); } catch (e) { console.error('Error parsing orders:', e); }
     }
   }, [storeSlug, store?.logo_url, store?.name]);
+
+  useEffect(() => {
+    const restorePendingCheckout = () => {
+      const savedCheckout = localStorage.getItem(`pending_checkout_${storeSlug}`);
+      if (!savedCheckout) {
+        setCheckoutHydrated(true);
+        return;
+      }
+
+      try {
+        const pending = JSON.parse(savedCheckout) as PendingCheckout;
+        setShowCart(pending.showCart ?? true);
+        setShowCheckout(pending.showCheckout ?? true);
+        setShowUpiQr(pending.showUpiQr ?? false);
+        setOrderId(pending.orderId || '');
+        setCustomerName(pending.customerName || '');
+        setCustomerPhone(pending.customerPhone || '');
+        setCustomerAddress(pending.customerAddress || '');
+        setShowPaymentComplete(pending.showPaymentComplete ?? false);
+      } catch (error) {
+        console.error('Error restoring pending checkout:', error);
+        localStorage.removeItem(`pending_checkout_${storeSlug}`);
+      } finally {
+        setCheckoutHydrated(true);
+      }
+    };
+
+    restorePendingCheckout();
+    window.addEventListener('pageshow', restorePendingCheckout);
+    return () => window.removeEventListener('pageshow', restorePendingCheckout);
+  }, [storeSlug]);
+
+  useEffect(() => {
+    if (!checkoutHydrated) return;
+
+    const hasPendingCheckout = showCheckout || showUpiQr || Boolean(orderId);
+    const storageKey = `pending_checkout_${storeSlug}`;
+
+    if (hasPendingCheckout) {
+      const pendingCheckout: PendingCheckout = {
+        showCart,
+        showCheckout,
+        showUpiQr,
+        orderId,
+        customerName,
+        customerPhone,
+        customerAddress,
+        showPaymentComplete,
+      };
+      localStorage.setItem(storageKey, JSON.stringify(pendingCheckout));
+    } else {
+      localStorage.removeItem(storageKey);
+    }
+  }, [
+    checkoutHydrated,
+    storeSlug,
+    showCart,
+    showCheckout,
+    showUpiQr,
+    orderId,
+    customerName,
+    customerPhone,
+    customerAddress,
+    showPaymentComplete,
+  ]);
 
   useEffect(() => {
     if (cart.length > 0) localStorage.setItem(`cart_${storeSlug}`, JSON.stringify(cart));
@@ -274,6 +351,7 @@ export default function StorefrontClient({
     try { window.open(whatsappUrl, '_blank'); } catch { window.parent.postMessage({ type: "OPEN_EXTERNAL_URL", data: { url: whatsappUrl } }, "*"); }
     
     setCart([]);
+    localStorage.removeItem(`pending_checkout_${storeSlug}`);
     setShowCart(false);
     setShowCheckout(false);
     setShowUpiQr(false);
@@ -323,6 +401,7 @@ export default function StorefrontClient({
     try { window.open(whatsappUrl, '_blank'); } catch { window.parent.postMessage({ type: "OPEN_EXTERNAL_URL", data: { url: whatsappUrl } }, "*"); }
     
     setCart([]);
+    localStorage.removeItem(`pending_checkout_${storeSlug}`);
     setShowCart(false);
     setShowCheckout(false);
   };
